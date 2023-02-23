@@ -3,6 +3,8 @@ gche__/
 # Checkpoints notebooks
 *.ipynb_checkpoints
 
+# Cache
+*__pycache__
 
 # C extensions
 *.so
