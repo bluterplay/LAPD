@@ -20,3 +20,4 @@ sdist/
 var/
 wheels/
 *Zone.Identifier
+.ipynb_checkpoints
