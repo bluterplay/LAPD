@@ -33,6 +33,7 @@ class Get_Data():
             self.df[num]= pd.to_numeric(self.df[num])
         for s in ls_strings:
             self.df[s].apply(lambda x: str(x).split(','))
+        self.df["time_occ"]=self.df["time_occ"].apply(lambda x: int(x[0:2])*60+int(x[2:]))
 
 
 Data= Get_Data()
