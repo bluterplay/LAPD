@@ -40,5 +40,5 @@ Data= Get_Data()
 Data.create_df()
 Data.infer_dtypes()
 df= Data.df.copy()
-print(df.info())
+df.to_csv("lapd.csv", index=False)
 
