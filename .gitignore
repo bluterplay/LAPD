@@ -1,6 +1,8 @@
 gche__/
-*.py[cod]
-*$py.class
+
+# Checkpoints
+*.ipynb_checkpoints
+
 
 # C extensions
 *.so
