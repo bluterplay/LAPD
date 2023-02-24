@@ -37,13 +37,14 @@ class Graphs_Cont():
         g=sns.scatterplot(x='lon', y= 'lat', data= df).set(title="Geolocalización ")
         plt.savefig("Graphs/Geolocalizacion.png")
 
-Data= Get_Data()
-Data.create_df()
-Data.infer_dtypes()
-df= Data.df.copy()
+#Data= Get_Data()
+#Data.create_df()
+#Data.infer_dtypes()
+#df= Data.df.copy()
 
-graphs= Graphs_Cont()
-graphs.box(df)
-graphs.heatMap(df)
-graphs.scatter(df)
-graphs.hist(df)
+#graphs= Graphs_Cont()
+#graphs.box(df)
+#graphs.heatMap(df)
+#graphs.scatter(df)
+#graphs.hist(df)
+
