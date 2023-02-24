@@ -1,6 +1,6 @@
-import requests
 import json
 import pandas as pd
+from sodapy import Socrata
 
 
 class Get_Data():
@@ -9,19 +9,10 @@ class Get_Data():
     
     def create_df(self):
         
-        r = requests.get('https://data.lacity.org/resource/2nrs-mtv8.json')
-        r.status_code
-        
-        x= r.text[1:-1].split("\n")[:][1:]
-        lista_textos = [x[1:] for x in r.text.split("\n")]
-        
-        lista_diccionarios = []
-
-        for i in range(len(lista_textos)-2):
-            resul = json.loads(lista_textos[i])
-            lista_diccionarios.append(resul) 
-            
-        self.df = pd.DataFrame.from_dict(lista_diccionarios)
+        client = Socrata("data.lacity.org", None)
+        results = client.get("2nrs-mtv8", limit=800000)
+        results_df = pd.DataFrame.from_records(results)   
+        self.df = results_df
         
     def infer_dtypes(self):
         ls_dates=["date_rptd", "date_occ"]
@@ -35,6 +26,12 @@ class Get_Data():
             self.df[s].apply(lambda x: str(x).split(','))
         self.df["time_occ"]=self.df["time_occ"].apply(lambda x: int(x[0:2])*60+int(x[2:]))
 
+
+Data= Get_Data()
+Data.create_df()
+Data.infer_dtypes()
+df= Data.df.copy()
+print(df.info())
 
 
 
