@@ -11,7 +11,8 @@ class Get_Data():
         
         client = Socrata("data.lacity.org", None)
         results = client.get("2nrs-mtv8", limit=800000)
-        results_df = pd.DataFrame.from_records(results)   
+        results_df = pd.DataFrame.from_records(results)
+        results_df.to_csv(r'lapd.csv')
         self.df = results_df
         
     def infer_dtypes(self):
