@@ -15,7 +15,7 @@ class Discrete():
             plt.clf()
             area = self.df.groupby([tag])[tag].count()[:5]
             plt.pie(area,labels=area.index, colors=palette_color, autopct='%.0f%%')
-            plt.savefig(f'../Graphs/pie_{tag}.png',  bbox_inches='tight')
+            plt.savefig(f'./Graphs/pie_{tag}.png',  bbox_inches='tight')
 
     def freq_table(self):
         palette_color = sns.color_palette('pastel')
@@ -27,7 +27,7 @@ class Discrete():
             ax.xaxis.set_visible(False)  # hide the x axis
             ax.yaxis.set_visible(False) 
             table(ax, pd.DataFrame(self.df[tag].value_counts())[:5])  
-            plt.savefig(f'../Graphs/table_{tag}.png')
+            plt.savefig(f'./Graphs/table_{tag}.png')
 
     def bar_chart(self):
         palette_color = sns.color_palette('pastel')
@@ -35,7 +35,7 @@ class Discrete():
         for tag in self.discrete:
             plt.clf()
             sns.countplot(x=self.df[tag])
-            plt.savefig(f'../Graphs/barchart_{tag}.png')
+            plt.savefig(f'./Graphs/barchart_{tag}.png')
 
     def time_series(self):
         palette_color = sns.color_palette('pastel')
@@ -44,21 +44,21 @@ class Discrete():
 
         plt.clf()
         sns.lineplot(x=time_series.index, y=time_series.values, data=time_series)
-        plt.savefig('../Graphs/timeseries.png')
+        plt.savefig('./Graphs/timeseries.png')
 
 
 
 
 
-if __name__ == "__main__":
-    df = pd.read_csv("../lapd.csv")
+#if __name__ == "__main__":
+#    df = pd.read_csv("../lapd.csv")
 
 
-    gen = Discrete(df)
-    gen.pie_chart()
+#    gen = Discrete(df)
+#    gen.pie_chart()
     
-    gen.freq_table()
-    plt.clf()
-    gen.bar_chart()
-    plt.clf()
-    gen.time_series()
+#    gen.freq_table()
+#    plt.clf()
+#    gen.bar_chart()
+#    plt.clf()
+#    gen.time_series()
