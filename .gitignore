@@ -4,6 +4,7 @@ gche__/
 *.ipynb_checkpoints
 
 # Cache
+sprint1/__pycache__
 *__pycache__
 
 # C extensions
