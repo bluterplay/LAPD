@@ -1,16 +1,3 @@
-import pandas as pd
-import numpy as np
-import csv
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
-from sklearn.linear_model import Ridge
-from sklearn import linear_model
 class Limpieza():
     def __init__(self,data):
         self.df=data
@@ -97,7 +84,8 @@ class Limpieza():
         X=sc_X.transform(X)
         y=clf.predict(X)
         self.df.loc[self.df.vict_age.isna(),'vict_age']=y
-        
+        filename = 'edad_regresion.sav'
+        pickle.dump(clf, open(filename, 'wb'))
 
        
     def col_corr(self,codigo,descripcion):
@@ -114,7 +102,7 @@ class Limpieza():
         for feature in features:
             aux = self.df[feature].value_counts(True,dropna=False)
             ls_categories = [category for category, freq in aux.items() if freq > 0.03 or category is np.nan]
-            self.df.loc[:,feature].loc['linear'] = self.df[feature].map(lambda x: x if (x in ls_categories or x is np.nan) else "Others")
+            self.df.loc[:,feature] = self.df[feature].map(lambda x: x if (x in ls_categories or x is np.nan) else "Others")
     def lugar(self):
         pl=[[[119,120,121,145,146.0,150.0,501.0, 502.0, 504.0,507.0, 508.0, 509.0, 510.0,511,515.0, 516.0,707],['vivienda']],
             [[101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 109.0, 110.0,116,117,
@@ -189,6 +177,8 @@ class Limpieza():
         
         X=imputar.loc[self.df.premis.isna(),imputar.columns!='premis']
         self.df.loc[self.df.premis.isna(),'premis']=clf.predict(X)
+        filename = 'premis_clasificacion.sav'
+        pickle.dump(clf, open(filename, 'wb'))
         
  
         
