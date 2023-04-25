@@ -18,6 +18,8 @@ class Cleaner():
                                     'PERSONAL THFT', 'Rape', 'Robbery', 'SIMPLEASSAULT']}
         
     def dummies(self,df, ls,column):
+        # Esta función la hice porque luego el OHE depende del orden de los factores, para eso hice el dc_cat
+        # Así mantenemos el mismo formato siempre
         n=len(df)
         dc_values={key:[0 for x in range(n)] for key in ls}
         i=0
@@ -35,7 +37,7 @@ class Cleaner():
         crm_cd_concat=self.df[['crm_cd_1','crm_cd_2','crm_cd_3','crm_cd_4']].fillna('').astype('string')
         crm_cd_concat=crm_cd_concat['crm_cd_1']+crm_cd_concat['crm_cd_2']+crm_cd_concat['crm_cd_3']+crm_cd_concat['crm_cd_4']
         self.df['crm_cd_concat']=crm_cd_concat
-        # fill naś and typos
+        # fill nan's and typos
         self.df['weapon_desc'].fillna('NO WEAPON',inplace=True)
         self.df['weapon_used_cd'].fillna('0',inplace=True)
         self.df.loc[self.df.vict_sex.isna(),'vict_sex']='X'
@@ -68,14 +70,17 @@ class Cleaner():
         not_found = ~self.df.loc[mask, 'location'].isin(loc_lat.keys())
         self.df.loc[mask & ~not_found, 'lat'] = self.df.loc[mask & ~not_found, 'location'].map(loc_lat)
         self.df.loc[mask & ~not_found, 'lon'] = self.df.loc[mask & ~not_found, 'location'].map(loc_lon)
+        ## Aqui duda, borramos los que no estan en el diccionario y son nulos o que sugieren?
         self.df.drop('location',axis=1,inplace=True)
         
     def clean(self):
+        ## Esta funcion ya nos deja los datos sin nulos
         self.df.drop('cross_street',axis=1,inplace=True)
         self.manageNan()
         self.manageLocation()
     
     def createDummies(self):
+        ## Genera las dummies de las categoricas
         imputar=self.df.drop(['dr_no', 'date_rptd', 'date_occ','area',
                          'rpt_dist_no','part_1_2','crm_cd','mocodes','premis_cd',
                          'weapon_used_cd','crm_cd_concat','rpt_dist_no'],axis=1).copy()
@@ -93,20 +98,22 @@ class Cleaner():
         return imputar
     
     def imputeAge(self):
+        ## creo que este segmento que es del codigo segun yo, podría ser otra función aparte no?
         ucr=pd.read_csv('ucr.csv')
         ucr=ucr.astype({'Code':'string'})
         self.df=self.df.astype({'crm_cd':'string'})
         ucr=dict(zip(ucr['Code'],ucr['Subcategory']))
         self.df['ucr']=self.df.crm_cd.map(ucr)
         self.df.ucr=self.df.ucr.fillna('Other')
-        
+
+        ## Generamos las dummies y tomamos los registros sin valores
         imputar=self.createDummies()
         X=imputar[imputar.vict_age.isna()].copy()
         y=X.vict_age.values
-        print(X.shape)
+        #print(X.shape)
         X=X.drop('vict_age',axis=1).values
-        print(X.shape)
-        
+        #print(X.shape)
+        ## Aplicamos el modelo del vecino cercano
         file = open("models/escaladorXEdad.pkl",'rb')
         sc_X = pickle.load(file)
         file.close()
@@ -117,6 +124,7 @@ class Cleaner():
         self.df.loc[self.df.vict_age.isna(),'vict_age']=y
         
     def imputePremis(self):
+        ## Aquí veo que usamos de nuevo el crear dummies, hay que ver como solucionar esto jaja
         imputar=self.createDummies()
         X=imputar.loc[self.df.premis.isna(),imputar.columns!='premis']
         
@@ -127,6 +135,7 @@ class Cleaner():
         self.df.loc[self.df.premis.isna(),'premis']=clf.predict(X)
     
     def col_corr(self,codigo,descripcion):
+        ## Honestamente no recuero que hacía esta mamada, ayudaaaa 
         dicc=dict(zip(self.df[codigo],self.df[descripcion]))
         w = csv.writer(open(codigo+".csv", "w"))
         for key, val in dicc.items():
@@ -134,6 +143,7 @@ class Cleaner():
         self.df.drop(descripcion,axis=1,inplace=True)
         
     def categoricas(self):
+        ## Aqui hay que generar el listado de cuales van a cada categoría
         features=['rpt_dist_no','weapon_used_cd','premis']
         for feature in features:
             aux = self.df[feature].value_counts(True,dropna=False)
@@ -186,6 +196,8 @@ class Cleaner():
             premis+=list(zip(secc[0],secc[1]*len(secc[0])))
         premis=dict(premis)
         self.df['premis']=self.df.premis_cd.map(premis)
+
+## Aquí empieza el test por así decirlo, deberíia ser las instrucciones a hacer para dejarlos limpios
 
 df=pd.read_csv("lapd.csv")
 sample= df.iloc[:2000,:].copy()
