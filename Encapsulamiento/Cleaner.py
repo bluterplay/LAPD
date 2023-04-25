@@ -12,8 +12,10 @@ class Cleaner():
         self.df.loc[(self.df.vict_age<0)|(self.df.vict_age>100),'vict_age']=np.nan
         self.dc_cat= dc_cat={'status':['AA', 'AO', 'IC', 'JA'],
                             'vict_sex': ['F', 'H', 'M'],
-                            'vict_descent': ['A', 'B', 'C', 'D', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'O', 'P', 'S','U', 'V', 'W', 'X'],
-                            'ucr': ['AGG. Assults', 'BRGLARY', 'BTFV', 'Homicide', 'MVT', 'OTHER THEFT','PERSONAL THFT', 'Rape', 'Robbery', 'SIMPLEASSAULT']}
+                            'vict_descent': ['A', 'B', 'C', 'D', 'F', 'G', 'H',
+                                              'I', 'J', 'K', 'L', 'O', 'P', 'S','U', 'V', 'W', 'X'],
+                            'ucr': ['AGG. Assults', 'BRGLARY', 'BTFV', 'Homicide', 'MVT', 'OTHER THEFT',
+                                    'PERSONAL THFT', 'Rape', 'Robbery', 'SIMPLEASSAULT']}
         
     def dummies(self,df, ls,column):
         n=len(df)
@@ -59,8 +61,13 @@ class Cleaner():
         directorio.location = directorio.location.str.upper()
         loc_lat = dict(zip(directorio.location,directorio.lat))
         loc_lon = dict(zip(directorio.location,directorio.lon))
-        self.df.lat.fillna(self.df.location.map(loc_lat),inplace=True)
-        self.df.lon.fillna(self.df.location.map(loc_lon),inplace=True)
+    
+        # Verificar si las columnas "lat" o "lon" tienen valores faltantes
+        mask = self.df['lat'].isna() | self.df['lon'].isna()
+        # Verificar si los valores de la columna "location" están en las claves del diccionario "loc_lat"
+        not_found = ~self.df.loc[mask, 'location'].isin(loc_lat.keys())
+        self.df.loc[mask & ~not_found, 'lat'] = self.df.loc[mask & ~not_found, 'location'].map(loc_lat)
+        self.df.loc[mask & ~not_found, 'lon'] = self.df.loc[mask & ~not_found, 'location'].map(loc_lon)
         self.df.drop('location',axis=1,inplace=True)
         
     def clean(self):
