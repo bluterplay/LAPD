@@ -68,8 +68,8 @@ class FeatureEngineering():
         for i in range(10,50,10):
             self.temp["MA"+str(i)]= self.temp[column].rolling(window =i).mean()
     
-    def scalerData(self,sc,sc2):
-        X,y=self.temp.drop(['count','date_rptd'],axis=1).to_numpy(),self.temp[["count"]].to_numpy(),
+    def scalerData(self,column,sc,sc2):
+        X,y=self.temp.drop([column],axis=1).to_numpy(),self.temp[[column]].to_numpy(),
 
         X=sc.tansfomr(X)
         y=sc2.transform(y)
