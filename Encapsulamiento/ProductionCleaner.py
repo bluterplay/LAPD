@@ -114,6 +114,25 @@ class ProductionCleaner():
             premis+=list(zip(secc[0],secc[1]*len(secc[0])))
         premis=dict(premis)
         self.df['premis']=self.df.premis_cd.map(premis)
+    def zonas(self):
+        clusters=pickle.load(open('cluster5.sav','rb'))
+        self.df['zonas']=clusters.predict(self.df[['lat','lon']])
+    def categorias(self):
+        columnas=['weapon_used_cd','premis']
+        for col in columnas:
+            with open("Data/Cleaner/"+col+"categorias", "rb") as fp:  
+                lista = pickle.load(fp)
+            self.df[col]=self.df[col].apply(lambda x: x if x in lista else 'Others')
+    def simple_imp(self):
+        with open("Data/Cleaner/imputer_mode", "rb") as fp:
+            imputador== pickle.load(fp)
+        self.df[['premis_cd','crm_cd','status']]=imputador.transform(self.df[['premis_cd','crm_cd','status']])
+    def super_clases(self):
+        temp=pd.read_csv('Data/Cleaner/crcd_Spcls.csv')
+        temp.drop('NewCode',axis=1,inplace=True)
+        self.df=self.df.merge(temp, how='left', left_on='crm_cd', right_on='crm_cd')
+        self.df.drop('crm_cd',axis=1,inplace=True)
+        self.df.rename(columns = {'Superclass':'crime'}, inplace = True)
 
 ## Aquí empieza el test por así decirlo, deberíia ser las instrucciones a hacer para dejarlos limpios
 
