@@ -1,51 +1,30 @@
-import pandas as pd
-import numpy as np
+from pandas import DataFrame, read_excel, read_csv
+from numpy import nan
 import csv
 import pickle
 
 
-class Cleaner():
+class ProductionCleaner():
 
     def __init__(self,data):
         self.df=data.copy()
-        self.df.loc[self.df.vict_age==0,'vict_age']=np.nan
-        self.df.loc[(self.df.vict_age<0)|(self.df.vict_age>100),'vict_age']=np.nan
-        self.dc_cat= dc_cat={'status':['AA', 'AO', 'IC', 'JA'],
-                            'vict_sex': ['F', 'H', 'M'],
-                            'vict_descent': ['A', 'B', 'C', 'D', 'F', 'G', 'H',
-                                              'I', 'J', 'K', 'L', 'O', 'P', 'S','U', 'V', 'W', 'X'],
-                            'ucr': ['AGG. Assults', 'BRGLARY', 'BTFV', 'Homicide', 'MVT', 'OTHER THEFT',
-                                    'PERSONAL THFT', 'Rape', 'Robbery', 'SIMPLEASSAULT']}
-        
-    def dummies(self,df, ls,column):
-        # Esta función la hice porque luego el OHE depende del orden de los factores, para eso hice el dc_cat
-        # Así mantenemos el mismo formato siempre
-        n=len(df)
-        dc_values={key:[0 for x in range(n)] for key in ls}
-        i=0
-        for _,row in df.iterrows():
-            try:
-                a=ls.index(row[column])
-                dc_values[row[column]][i]=1
-            except:
-                pass
-            i+=1
-        return pd.DataFrame(dc_values, index=df.index)
+
         
     def manageNan(self):
-        # Concatenate crimes codes
-        crm_cd_concat=self.df[['crm_cd_1','crm_cd_2','crm_cd_3','crm_cd_4']].fillna('').astype('string')
-        crm_cd_concat=crm_cd_concat['crm_cd_1']+crm_cd_concat['crm_cd_2']+crm_cd_concat['crm_cd_3']+crm_cd_concat['crm_cd_4']
-        self.df['crm_cd_concat']=crm_cd_concat
         # fill nan's and typos
-        self.df['weapon_desc'].fillna('NO WEAPON',inplace=True)
+        #self.df.loc[self.df.vict_age==0,'vict_age']=nan
+        #self.df.loc[(self.df.vict_age<0)|(self.df.vict_age>100),'vict_age']=nan
         self.df['weapon_used_cd'].fillna('0',inplace=True)
         self.df.loc[self.df.vict_sex.isna(),'vict_sex']='X'
         self.df.loc[self.df.vict_sex=='H','vict_sex']=='X'
         self.df.loc[self.df.vict_descent.isna(),'vict_descent']='U'
-        self.df.loc[self.df.lon==0,['lat','lon']]=np.nan
+        self.df.loc[self.df.lon==0,['lat','lon']]=nan
+    
+    def dropColumns(self):
         # Drop columns
-        self.df.drop(['crm_cd_1','crm_cd_2','crm_cd_3','crm_cd_4','area_name','crm_cd_desc','premis_desc','weapon_desc', 'status_desc'],axis=1,inplace=True)
+        self.df.drop(['crm_cd_1','crm_cd_2','crm_cd_3','crm_cd_4','area_name','time_occ',
+                      'crm_cd_desc','premis_desc','weapon_desc', 'status_desc','area_name',
+                      'date_occ','area','rpt_dist_no','part_1_2','mocodes', "vict_age"],axis=1,inplace=True)
         try:
             self.df.drop(self.df.loc[self.df.status=='CC'].index,inplace=True)
         except:
@@ -58,7 +37,7 @@ class Cleaner():
         self.df.location = self.df.location.str.replace(" ", "")
         self.df.location = self.df.location.str.upper()
         # Replace with dictonary values
-        directorio = pd.read_excel('Directorio_Lat_Lon.xlsx')
+        directorio = read_excel('Data/Directorio_Lat_Lon.xlsx')
         directorio.location = directorio.location.str.replace(" ", "")
         directorio.location = directorio.location.str.upper()
         loc_lat = dict(zip(directorio.location,directorio.lat))
@@ -77,78 +56,17 @@ class Cleaner():
         ## Esta funcion ya nos deja los datos sin nulos
         self.df.drop('cross_street',axis=1,inplace=True)
         self.manageNan()
+        self.dropColumns()
+        print(self.df.columns)
         self.manageLocation()
-    
-    def createDummies(self):
-        ## Genera las dummies de las categoricas
-        imputar=self.df.drop(['dr_no', 'date_rptd', 'date_occ','area',
-                         'rpt_dist_no','part_1_2','crm_cd','mocodes','premis_cd',
-                         'weapon_used_cd','crm_cd_concat','rpt_dist_no'],axis=1).copy()
-        dum1= self.dummies(imputar,self.dc_cat["status"],"status")
-        imputar.drop('status',axis=1,inplace=True)
-        dum2= self.dummies(imputar,self.dc_cat["vict_sex"],"vict_sex")
-        imputar.drop('vict_sex',axis=1,inplace=True)
-        dum3= self.dummies(imputar,self.dc_cat["vict_descent"],"vict_descent")
-        imputar.drop('vict_descent',axis=1,inplace=True)
-        dum4= self.dummies(imputar,self.dc_cat["ucr"],"ucr")
-        imputar.drop('ucr',axis=1,inplace=True)
-        
-        imputar=pd.concat([imputar,dum1,dum2,dum3,dum4],axis=1)
-
-        return imputar
-    
-    def imputeAge(self):
-        ## creo que este segmento que es del codigo segun yo, podría ser otra función aparte no?
-        ucr=pd.read_csv('ucr.csv')
-        ucr=ucr.astype({'Code':'string'})
-        self.df=self.df.astype({'crm_cd':'string'})
-        ucr=dict(zip(ucr['Code'],ucr['Subcategory']))
-        self.df['ucr']=self.df.crm_cd.map(ucr)
-        self.df.ucr=self.df.ucr.fillna('Other')
-
-        ## Generamos las dummies y tomamos los registros sin valores
-        imputar=self.createDummies()
-        X=imputar[imputar.vict_age.isna()].copy()
-        y=X.vict_age.values
-        #print(X.shape)
-        X=X.drop('vict_age',axis=1).values
-        #print(X.shape)
-        ## Aplicamos el modelo del vecino cercano
-        file = open("models/escaladorXEdad.pkl",'rb')
-        sc_X = pickle.load(file)
-        file.close()
-        
-        X=sc_X.transform(X)
-        clf=pickle.load(open('models/edad_regresion.sav', 'rb'))
-        y=clf.predict(X)
-        self.df.loc[self.df.vict_age.isna(),'vict_age']=y
-        
-    def imputePremis(self):
-        ## Aquí veo que usamos de nuevo el crear dummies, hay que ver como solucionar esto jaja
-        imputar=self.createDummies()
-        X=imputar.loc[self.df.premis.isna(),imputar.columns!='premis']
-        
-        sc_X=pickle.load(open("models/escaladorXPremis.pkl", "rb"))
-        X= sc_X.transform(X)
-        
-        clf=pickle.load(open('models/premis_clasificacion.sav', 'rb'))
-        self.df.loc[self.df.premis.isna(),'premis']=clf.predict(X)
-    
-    def col_corr(self,codigo,descripcion):
-        ## Honestamente no recuero que hacía esta mamada, ayudaaaa 
-        dicc=dict(zip(self.df[codigo],self.df[descripcion]))
-        w = csv.writer(open(codigo+".csv", "w"))
-        for key, val in dicc.items():
-            w.writerow([key, val])
-        self.df.drop(descripcion,axis=1,inplace=True)
         
     def categoricas(self):
         ## Aqui hay que generar el listado de cuales van a cada categoría
-        features=['rpt_dist_no','weapon_used_cd','premis']
+        features=['weapon_used_cd','premis']
         for feature in features:
             aux = self.df[feature].value_counts(True,dropna=False)
-            ls_categories = [category for category, freq in aux.items() if freq > 0.03 or category is np.nan]
-            self.df.loc[:,feature] = self.df[feature].map(lambda x: x if (x in ls_categories or x is np.nan) else "Others")
+            ls_categories = [category for category, freq in aux.items() if freq > 0.03 or category is nan]
+            self.df.loc[:,feature] = self.df[feature].map(lambda x: x if (x in ls_categories or x is nan) else "Others")
             
     def clipping(self):
         self.df['lon']=self.df['lon'].clip(-118.7, -118.1)
@@ -215,20 +133,14 @@ class Cleaner():
         self.df=self.df.merge(temp, how='left', left_on='crm_cd', right_on='crm_cd')
         self.df.drop('crm_cd',axis=1,inplace=True)
         self.df.rename(columns = {'Superclass':'crime'}, inplace = True)
-## Aquí empieza el test por así decirlo, deberíia ser las instrucciones a hacer para dejarlos limpios
-
-
 
 ## Aquí empieza el test por así decirlo, deberíia ser las instrucciones a hacer para dejarlos limpios
 
-df=pd.read_csv("lapd.csv")
+df=read_csv("lapd.csv")
 sample= df.iloc[:2000,:].copy()
 
-test= Cleaner(sample)
-
+test= ProductionCleaner(sample)
 test.clean()
-
-test.imputeAge()
 
 test.clipping()
 
@@ -236,6 +148,6 @@ test.lugar()
 
 test.categoricas()
 
-test.imputePremis()
 
 print(test.df.sample(10))
+print(test.df.isna().mean())
