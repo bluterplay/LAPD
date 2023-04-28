@@ -60,13 +60,7 @@ class ProductionCleaner():
         print(self.df.columns)
         self.manageLocation()
         
-    def categoricas(self):
-        ## Aqui hay que generar el listado de cuales van a cada categoría
-        features=['weapon_used_cd','premis']
-        for feature in features:
-            aux = self.df[feature].value_counts(True,dropna=False)
-            ls_categories = [category for category, freq in aux.items() if freq > 0.03 or category is nan]
-            self.df.loc[:,feature] = self.df[feature].map(lambda x: x if (x in ls_categories or x is nan) else "Others")
+    
             
     def clipping(self):
         self.df['lon']=self.df['lon'].clip(-118.7, -118.1)
@@ -125,10 +119,10 @@ class ProductionCleaner():
             self.df[col]=self.df[col].apply(lambda x: x if x in lista else 'Others')
     def simple_imp(self):
         with open("Data/Cleaner/imputer_mode", "rb") as fp:
-            imputador== pickle.load(fp)
+            imputador= pickle.load(fp)
         self.df[['premis_cd','crm_cd','status']]=imputador.transform(self.df[['premis_cd','crm_cd','status']])
     def super_clases(self):
-        temp=pd.read_csv('Data/Cleaner/crcd_Spcls.csv')
+        temp=read_csv('Data/Cleaner/crcd_Spcls.csv')
         temp.drop('NewCode',axis=1,inplace=True)
         self.df=self.df.merge(temp, how='left', left_on='crm_cd', right_on='crm_cd')
         self.df.drop('crm_cd',axis=1,inplace=True)
