@@ -1,6 +1,6 @@
-import json
 import pandas as pd
 from sodapy import Socrata
+from datetime import datetime,timedelta
 
 
 class Get_Data():

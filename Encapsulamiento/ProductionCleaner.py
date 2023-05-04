@@ -1,6 +1,5 @@
-from pandas import DataFrame, read_excel, read_csv
+from pandas import DataFrame,  read_csv
 from numpy import nan
-import csv
 import pickle
 
 
@@ -37,7 +36,7 @@ class ProductionCleaner():
         self.df.location = self.df.location.str.replace(" ", "")
         self.df.location = self.df.location.str.upper()
         # Replace with dictonary values
-        directorio = read_excel('Data/Directorio_Lat_Lon.xlsx')
+        directorio = read_csv('Data/Cleaner/Directorio_Lat_Lon.csv')
         directorio.location = directorio.location.str.replace(" ", "")
         directorio.location = directorio.location.str.upper()
         loc_lat = dict(zip(directorio.location,directorio.lat))
@@ -57,11 +56,9 @@ class ProductionCleaner():
         self.df.drop('cross_street',axis=1,inplace=True)
         self.manageNan()
         self.dropColumns()
-        print(self.df.columns)
+        #print(self.df.columns)
         self.manageLocation()
-        
-    
-            
+                  
     def clipping(self):
         self.df['lon']=self.df['lon'].clip(-118.7, -118.1)
         self.df['lat']=self.df['lat'].clip(33.6, 34.4)
@@ -107,26 +104,31 @@ class ProductionCleaner():
         for secc in pl:
             premis+=list(zip(secc[0],secc[1]*len(secc[0])))
         premis=dict(premis)
-        self.df['premis']=self.df.premis_cd.map(premis)
+        self.df['premis']=self.df["premis_cd"].apply(lambda x: premis[x] if x in premis.keys() else "otro")
+    
     def zonas(self):
-        clusters=pickle.load(open('cluster5.sav','rb'))
+        clusters=pickle.load(open('models/Cleaner/cluster5.sav','rb'))
         self.df['zonas']=clusters.predict(self.df[['lat','lon']])
+   
     def categorias(self):
         columnas=['weapon_used_cd','premis']
         for col in columnas:
-            with open("Data/Cleaner/"+col+"categorias", "rb") as fp:  
+            with open("Data/Cleaner/"+col+"_categorias", "rb") as fp:  
                 lista = pickle.load(fp)
             self.df[col]=self.df[col].apply(lambda x: x if x in lista else 'Others')
+    
     def simple_imp(self):
         with open("Data/Cleaner/imputer_mode", "rb") as fp:
             imputador= pickle.load(fp)
         self.df[['premis_cd','crm_cd','status']]=imputador.transform(self.df[['premis_cd','crm_cd','status']])
+    
     def super_clases(self):
-        temp=read_csv('Data/Cleaner/crcd_Spcls.csv')
-        temp.drop('NewCode',axis=1,inplace=True)
+        temp=read_csv('Data/Cleaner/crcode_Supclass.csv')
+        #temp.drop('NewCode',axis=1,inplace=True)
+        self.df.crm_cd= self.df.crm_cd.astype("int")
         self.df=self.df.merge(temp, how='left', left_on='crm_cd', right_on='crm_cd')
         self.df.drop('crm_cd',axis=1,inplace=True)
-        self.df.rename(columns = {'Superclass':'crime'}, inplace = True)
+        self.df.rename(columns = {'Superclass':'crime', 'NewCode': 'crm_cd'}, inplace = True)
 
 ## Aquí empieza el test por así decirlo, deberíia ser las instrucciones a hacer para dejarlos limpios
 

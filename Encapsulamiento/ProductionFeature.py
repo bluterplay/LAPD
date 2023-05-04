@@ -1,19 +1,20 @@
 from datetime import datetime
 from pandas import date_range, read_csv, DataFrame
 from statsmodels.tsa.api import SimpleExpSmoothing
+from pickle import load
 
 class CubeCrimesGenerator():
     
     def __init__(self,df):
         self.df = df.copy()
         data= self.df.copy()
-        data["Date"]=data["date_rptd"].apply(lambda x: datetime.strptime(x, "%Y-%m-%d"))
+        data["Date"]=data["date_rptd"]
         self.start= str(data["Date"].min())
         self.end= str(data["Date"].max())
         self.ls_dfs=[]
     
     def checkDates(self,data,zone,crimeType):
-        data["Date"]=data["date_rptd"].apply(lambda x: datetime.strptime(x, "%Y-%m-%d"))
+        data["Date"]=data["date_rptd"]
         date_index = date_range(start=self.start, end=self.end, freq="D")
         data = data.set_index("Date").reindex(date_index)
         data.drop(columns=["date_rptd"], inplace=True)
@@ -21,8 +22,7 @@ class CubeCrimesGenerator():
         data.rename(columns={0: field}, inplace= True)
         data[field]= data[field].fillna(0)
         return data
-    
-    
+       
     def generateDataframes(self):
         ls_dfs= []
         for zone in range(5):
@@ -83,7 +83,16 @@ class FeatureEngineering():
         self.smoothing(column)
         self.createMA(column)
         self.temp.dropna(inplace=True)
-        #self.scalerData()
+        zone=column[8]
+        crime=column[10:]
+        scx_file="models/FeatureEngineer/Scalers/sc_x_"+crime+"_"+zone+".pkl"
+        scy_file="models/FeatureEngineer/Scalers/sc_y_"+crime+"_"+zone+".pkl"
+        with open(scx_file, "rb") as fp:
+            sc= load(fp)
+        with open(scy_file, "rb") as fp:
+            sc2= load(fp)
+        return self.scalerData(column,sc,sc2)
+    
     
         
 
